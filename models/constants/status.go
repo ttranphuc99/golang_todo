@@ -1,6 +1,8 @@
 package constants
 
+const TodoStatusAll = -1
+
 const (
-	StatusActive = iota
-	StatusCompleted
+	TodoStatusActive = iota
+	TodoStatusCompleted
 )

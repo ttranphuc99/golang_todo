@@ -1,17 +1,17 @@
 package main
 
 import (
-	"todoapi/services"
+	"todoapi/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
-	router.GET("/todo", services.GetAllTodo)
-	router.POST("/todo", services.InsertTodo)
-	router.PUT("/todo", services.UpdateTodo)
-	router.GET("/todo/:id", services.GetTodoByID)
+	router.GET("/todo", controllers.GetAllTodo)
+	router.POST("/todo", controllers.InsertTodo)
+	router.PUT("/todo", controllers.UpdateTodo)
+	router.GET("/todo/:id", controllers.GetTodoByID)
 
 	router.Run("localhost:9000")
 }

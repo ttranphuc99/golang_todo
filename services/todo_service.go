@@ -2,101 +2,70 @@ package services
 
 import (
 	"errors"
-	"net/http"
-	"strconv"
 	"todoapi/models"
 	"todoapi/models/constants"
-
-	"github.com/gin-gonic/gin"
 )
 
-var todos = []*models.Todo{
-	{ID: 1, Content: "11111", Status: constants.StatusActive},
-	{ID: 2, Content: "2222", Status: constants.StatusCompleted},
-	{ID: 3, Content: "3333", Status: constants.StatusActive},
+var todos = []models.Todo{
+	{ID: 1, Content: "11111", Status: constants.TodoStatusActive},
+	{ID: 2, Content: "2222", Status: constants.TodoStatusCompleted},
+	{ID: 3, Content: "3333", Status: constants.TodoStatusActive},
 }
 
-func GetAllTodo(c *gin.Context) {
-	statusFilter := c.Query("status")
+func GetAllTodo(status int64) []models.Todo {
+	if status != constants.TodoStatusAll {
+		todosRes := []models.Todo{}
 
-	if statusFilter != "" {
-		status, err := strconv.ParseInt(statusFilter, 10, 64)
-
-		if err == nil {
-			todosRes := []models.Todo{}
-
-			for _, todo := range todos {
-				if status == int64(todo.Status) {
-					todosRes = append(todosRes, *todo)
-				}
+		for _, todo := range todos {
+			if status == int64(todo.Status) {
+				todosRes = append(todosRes, todo)
 			}
-
-			c.IndentedJSON(http.StatusOK, todosRes)
-			return
 		}
+
+		return todosRes
 	}
-	c.IndentedJSON(http.StatusOK, todos)
+
+	return todos
 }
 
-func InsertTodo(c *gin.Context) {
-	var newTodo models.Todo
-
-	if err := c.BindJSON(&newTodo); err != nil {
-		return
-	}
-
+func InsertTodo(newTodo models.Todo) (models.Todo, error) {
 	_, err := findById(newTodo.ID)
 
 	if err == nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Duplicate ID"})
-		return
+		return models.Todo{}, errors.New("duplicate id")
 	}
 
-	todos = append(todos, &newTodo)
-	c.IndentedJSON(http.StatusCreated, newTodo)
+	todos = append(todos, newTodo)
+	return newTodo, nil
 }
 
-func GetTodoByID(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-
-	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "not found todo with id = " + c.Param("id")})
-		return
-	}
-
+func GetTodoByID(id int64) (models.Todo, error) {
 	todo, err := findById(id)
 
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "not found todo with id = " + c.Param("id")})
+		return models.Todo{}, err
 	} else {
-		c.IndentedJSON(http.StatusOK, *todo)
+		return *todo, nil
 	}
 }
 
-func UpdateTodo(c *gin.Context) {
-	var newTodo models.Todo
-
-	if err := c.BindJSON(&newTodo); err != nil {
-		return
-	}
-
+func UpdateTodo(newTodo models.Todo) (models.Todo, error) {
 	oldTodo, err := findById(newTodo.ID)
 
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "not found todo with id = " + c.Param("id")})
-	} else {
-		oldTodo.Content = newTodo.Content
-		oldTodo.Status = newTodo.Status
-
-		c.IndentedJSON(http.StatusOK, *oldTodo)
+		return models.Todo{}, err
 	}
+	oldTodo.Content = newTodo.Content
+	oldTodo.Status = newTodo.Status
+
+	return *oldTodo, nil
 }
 
 func findById(id int64) (todo *models.Todo, e error) {
 	for idx, todo := range todos {
 		if id == todo.ID {
-			return todos[idx], nil
+			return &todos[idx], nil
 		}
 	}
-	return &models.Todo{}, errors.New("not found")
+	return &models.Todo{}, errors.New("not found with id " + string(id))
 }
