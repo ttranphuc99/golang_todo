@@ -52,13 +52,33 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 		}
 
 		// parse value success
-		result := controller.service.GetAllTodo(status)
+		result, err := controller.service.GetAllTodo(status)
+
+		if err != nil {
+			handleBadRequest(
+				c,
+				dtos.BadRequestResponse{
+					ErrorMessage: err.Error(),
+				},
+			)
+			return
+		}
 		handleSuccess(c, result)
 		return
 	}
 
 	// get all to do
-	result := controller.service.GetAllTodo(constants.TodoStatusAll)
+	result, err := controller.service.GetAllTodo(constants.TodoStatusAll)
+
+	if err != nil {
+		handleBadRequest(
+			c,
+			dtos.BadRequestResponse{
+				ErrorMessage: err.Error(),
+			},
+		)
+		return
+	}
 	handleSuccess(c, result)
 }
 

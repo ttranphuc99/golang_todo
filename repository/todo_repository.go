@@ -24,7 +24,12 @@ func (repo *TodoRepositoryStruct) Init() error {
 
 func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 	db := repo.dbHandler.GetDb()
-	rows, _ := db.Query(getAllTodoSql)
+	rows, error := db.Query(getAllTodoSql)
+
+	if error != nil {
+		log.Panic(error)
+		return nil, error
+	}
 
 	var todoLst []models.Todo
 
@@ -32,21 +37,21 @@ func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 		var id int64
 		var title, content string
 		var status int
-		var owner_id string
+		var owner string
 		var updated_time, created_time string
 
-		error := rows.Scan(&id, &title, &content, &status, &owner_id, &created_time, &updated_time)
+		error := rows.Scan(&id, &title, &content, &status, &owner, &created_time, &updated_time)
 
 		if error != nil {
 			log.Panicln(error)
 			return nil, error
 		}
 
-		todo := models.Todo{id, title, content, status, owner_id, created_time, updated_time}
+		todo := models.Todo{id, title, content, status, owner, created_time, updated_time}
 		todoLst = append(todoLst, todo)
 	}
 
-	error := db.Close()
+	error = db.Close()
 
 	if error != nil {
 		return nil, error

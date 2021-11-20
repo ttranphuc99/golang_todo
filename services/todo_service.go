@@ -14,7 +14,7 @@ var todos = []models.Todo{
 }
 
 type TodoService interface {
-	GetAllTodo(status int64) []models.Todo
+	GetAllTodo(status int64) ([]models.Todo, error)
 	InsertTodo(newTodo models.Todo) (models.Todo, error)
 	GetTodoByID(id int64) (models.Todo, error)
 	UpdateTodo(newTodo models.Todo) (models.Todo, error)
@@ -31,7 +31,7 @@ func (service *TodoServiceStruct) Init() error {
 	return service.repository.Init()
 }
 
-func (service *TodoServiceStruct) GetAllTodo(status int64) []models.Todo {
+func (service *TodoServiceStruct) GetAllTodo(status int64) ([]models.Todo, error) {
 	if status != constants.TodoStatusAll {
 		todosRes := []models.Todo{}
 
@@ -41,11 +41,15 @@ func (service *TodoServiceStruct) GetAllTodo(status int64) []models.Todo {
 			}
 		}
 
-		return todosRes
+		return todosRes, nil
 	}
 
-	result, _ := service.repository.GetAllTodo()
-	return result
+	result, err := service.repository.GetAllTodo()
+
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (t *TodoServiceStruct) InsertTodo(newTodo models.Todo) (models.Todo, error) {
