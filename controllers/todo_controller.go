@@ -12,8 +12,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type TodoController interface {
+	GetAllTodo(c *gin.Context)
+	InsertTodo(c *gin.Context)
+	UpdateTodo(c *gin.Context)
+	GetTodoByID(c *gin.Context)
+	Init()
+}
+
+type TodoControllerStruct struct {
+	service services.TodoService
+}
+
+// init
+func (controller *TodoControllerStruct) Init() {
+	controller.service = &services.TodoServiceStruct{}
+	controller.service.Init()
+}
+
 // GetAllTodo
-func GetAllTodo(c *gin.Context) {
+func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 	// get status filter
 	statusFilter := c.Query("status")
 
@@ -34,18 +52,18 @@ func GetAllTodo(c *gin.Context) {
 		}
 
 		// parse value success
-		result := services.GetAllTodo(status)
+		result := controller.service.GetAllTodo(status)
 		handleSuccess(c, result)
 		return
 	}
 
 	// get all to do
-	result := services.GetAllTodo(constants.TodoStatusAll)
+	result := controller.service.GetAllTodo(constants.TodoStatusAll)
 	handleSuccess(c, result)
 }
 
 // InsertTodo
-func InsertTodo(c *gin.Context) {
+func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 	var newTodo models.Todo
 
 	if err := c.BindJSON(&newTodo); err != nil {
@@ -58,7 +76,7 @@ func InsertTodo(c *gin.Context) {
 		return
 	}
 
-	newTodo, err := services.InsertTodo(newTodo)
+	newTodo, err := controller.service.InsertTodo(newTodo)
 
 	if err != nil {
 		handleBadRequest(
@@ -74,7 +92,7 @@ func InsertTodo(c *gin.Context) {
 }
 
 // UpdateTodo
-func UpdateTodo(c *gin.Context) {
+func (controller *TodoControllerStruct) UpdateTodo(c *gin.Context) {
 	var newTodo models.Todo
 	if err := c.BindJSON(&newTodo); err != nil {
 		handleBadRequest(
@@ -86,7 +104,7 @@ func UpdateTodo(c *gin.Context) {
 		return
 	}
 
-	newTodo, err := services.UpdateTodo(newTodo)
+	newTodo, err := controller.service.UpdateTodo(newTodo)
 
 	if err != nil {
 		handleBadRequest(
@@ -102,7 +120,7 @@ func UpdateTodo(c *gin.Context) {
 }
 
 // GetTodoByID
-func GetTodoByID(c *gin.Context) {
+func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 	if err != nil {
@@ -115,7 +133,17 @@ func GetTodoByID(c *gin.Context) {
 		return
 	}
 
-	todo, err := services.GetTodoByID(id)
+	todo, err := controller.service.GetTodoByID(id)
+
+	if err != nil {
+		handleBadRequest(
+			c,
+			dtos.BadRequestResponse{
+				ErrorMessage: err.Error(),
+			},
+		)
+		return
+	}
 
 	handleSuccess(c, todo)
 }

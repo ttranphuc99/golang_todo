@@ -4,6 +4,7 @@ import (
 	"errors"
 	"todoapi/models"
 	"todoapi/models/constants"
+	"todoapi/repository"
 )
 
 var todos = []models.Todo{
@@ -12,7 +13,25 @@ var todos = []models.Todo{
 	{ID: 3, Content: "3333", Status: constants.TodoStatusActive},
 }
 
-func GetAllTodo(status int64) []models.Todo {
+type TodoService interface {
+	GetAllTodo(status int64) []models.Todo
+	InsertTodo(newTodo models.Todo) (models.Todo, error)
+	GetTodoByID(id int64) (models.Todo, error)
+	UpdateTodo(newTodo models.Todo) (models.Todo, error)
+	Init() error
+}
+
+type TodoServiceStruct struct {
+	repository repository.TodoRepository
+}
+
+func (service *TodoServiceStruct) Init() error {
+	tempRepo := &repository.TodoRepositoryStruct{}
+	service.repository = tempRepo
+	return service.repository.Init()
+}
+
+func (service *TodoServiceStruct) GetAllTodo(status int64) []models.Todo {
 	if status != constants.TodoStatusAll {
 		todosRes := []models.Todo{}
 
@@ -25,10 +44,11 @@ func GetAllTodo(status int64) []models.Todo {
 		return todosRes
 	}
 
-	return todos
+	result, _ := service.repository.GetAllTodo()
+	return result
 }
 
-func InsertTodo(newTodo models.Todo) (models.Todo, error) {
+func (t *TodoServiceStruct) InsertTodo(newTodo models.Todo) (models.Todo, error) {
 	_, err := findById(newTodo.ID)
 
 	if err == nil {
@@ -39,7 +59,7 @@ func InsertTodo(newTodo models.Todo) (models.Todo, error) {
 	return newTodo, nil
 }
 
-func GetTodoByID(id int64) (models.Todo, error) {
+func (t *TodoServiceStruct) GetTodoByID(id int64) (models.Todo, error) {
 	todo, err := findById(id)
 
 	if err != nil {
@@ -49,7 +69,7 @@ func GetTodoByID(id int64) (models.Todo, error) {
 	}
 }
 
-func UpdateTodo(newTodo models.Todo) (models.Todo, error) {
+func (t *TodoServiceStruct) UpdateTodo(newTodo models.Todo) (models.Todo, error) {
 	oldTodo, err := findById(newTodo.ID)
 
 	if err != nil {

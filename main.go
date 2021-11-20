@@ -8,6 +8,9 @@ import (
 
 func main() {
 	router := gin.Default()
+	controllers := controllers.TodoControllerStruct{}
+	controllers.Init()
+
 	router.GET("/todo", controllers.GetAllTodo)
 	router.POST("/todo", controllers.InsertTodo)
 	router.PUT("/todo", controllers.UpdateTodo)
