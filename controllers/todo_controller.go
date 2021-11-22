@@ -17,7 +17,7 @@ type TodoController interface {
 	InsertTodo(c *gin.Context)
 	UpdateTodo(c *gin.Context)
 	GetTodoByID(c *gin.Context)
-	Init()
+	Init() error
 }
 
 type TodoControllerStruct struct {
@@ -25,9 +25,9 @@ type TodoControllerStruct struct {
 }
 
 // init
-func (controller *TodoControllerStruct) Init() {
+func (controller *TodoControllerStruct) Init() error {
 	controller.service = &services.TodoServiceStruct{}
-	controller.service.Init()
+	return controller.service.Init()
 }
 
 // GetAllTodo
@@ -166,14 +166,4 @@ func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
 	}
 
 	handleSuccess(c, todo)
-}
-
-// handle bad request
-func handleBadRequest(c *gin.Context, errorResponse dtos.BadRequestResponse) {
-	c.IndentedJSON(http.StatusBadRequest, errorResponse)
-}
-
-// handle success
-func handleSuccess(c *gin.Context, data interface{}) {
-	c.IndentedJSON(http.StatusOK, data)
 }
