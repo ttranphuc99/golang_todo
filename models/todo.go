@@ -1,11 +1,13 @@
 package models
 
+import "database/sql"
+
 type Todo struct {
-	ID          int64  `json:id,omitempty`
-	Title       string `json:title`
-	Content     string `json:content`
-	Status      int    `json:status`
-	OwnerId     string `json:ownerId,omitempty`
-	CreatedTime string `json:createdTime,omitempty`
-	UpdateTime  string `json:updatedTime,omitempty`
+	ID          int64
+	Title       sql.NullString
+	Content     sql.NullString
+	Status      sql.NullInt16
+	OwnerId     sql.NullString
+	CreatedTime sql.NullString
+	UpdateTime  sql.NullString
 }

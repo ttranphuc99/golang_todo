@@ -18,7 +18,6 @@ type TodoController interface {
 	InsertTodo(c *gin.Context)
 	UpdateTodo(c *gin.Context)
 	GetTodoByID(c *gin.Context)
-	Init() error
 }
 
 type TodoControllerStruct struct {
@@ -26,13 +25,18 @@ type TodoControllerStruct struct {
 }
 
 // init
-func (controller *TodoControllerStruct) Init() error {
+func (controller *TodoControllerStruct) init() error {
 	controller.service = &services.TodoServiceStruct{}
 	return controller.service.Init()
 }
 
 // GetAllTodo
 func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
+	if error := controller.init(); error != nil {
+		log.Panicln(error)
+		return
+	}
+
 	// get status filter
 	statusFilter := c.Query("status")
 
@@ -86,9 +90,14 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 
 // InsertTodo
 func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
-	newTodo := &models.Todo{}
+	if error := controller.init(); error != nil {
+		log.Panicln(error)
+		return
+	}
 
-	if err := c.BindJSON(newTodo); err != nil {
+	todoDTO := &dtos.TodoDTO{}
+
+	if err := c.BindJSON(todoDTO); err != nil {
 		log.Panicln(err)
 		handleBadRequest(
 			c,
@@ -99,9 +108,9 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 		return
 	}
 
-	newTodo.OwnerId = c.GetString(config.TOKEN_CURRENT_USER_ID)
+	todoDTO.OwnerId = c.GetString(config.TOKEN_CURRENT_USER_ID)
 
-	resultTodo, err := controller.service.InsertTodo(newTodo)
+	resultTodo, err := controller.service.InsertTodo(todoDTO)
 
 	if err != nil {
 		log.Panicln(err)
@@ -114,7 +123,7 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, resultTodo)
+	c.JSON(http.StatusCreated, resultTodo)
 }
 
 // UpdateTodo

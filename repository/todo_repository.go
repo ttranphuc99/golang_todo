@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"log"
 	"todoapi/database"
 	"todoapi/models"
@@ -10,6 +11,7 @@ type TodoRepository interface {
 	GetAllTodo() ([]models.Todo, error)
 	Init() error
 	InsertTodo(todo *models.Todo) (models.Todo, error)
+	GetTodoByIDAndOwner(id int64, owner string) (models.Todo, error)
 }
 
 type TodoRepositoryStruct struct {
@@ -36,10 +38,10 @@ func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 
 	for rows.Next() {
 		var id int64
-		var title, content string
-		var status int
-		var owner string
-		var updatedTime, createdTime string
+		var title, content sql.NullString
+		var status sql.NullInt16
+		var owner sql.NullString
+		var updatedTime, createdTime sql.NullString
 
 		error := rows.Scan(&id, &title, &content, &status, &owner, &createdTime, &updatedTime)
 
@@ -84,17 +86,18 @@ func (repo *TodoRepositoryStruct) InsertTodo(todo *models.Todo) (models.Todo, er
 		log.Panicln(error)
 		return models.Todo{}, error
 	}
+	// db.Close()
 
-	return repo.GetByID(todo.OwnerId, todo.ID)
+	return repo.GetTodoByIDAndOwner(todo.ID, todo.OwnerId.String)
 }
 
-func (repo *TodoRepositoryStruct) GetByID(ownerId string, id int64) (models.Todo, error) {
+func (repo *TodoRepositoryStruct) GetTodoByIDAndOwner(id int64, owner string) (models.Todo, error) {
 	db := repo.dbHandler.GetDb()
-	row := db.QueryRow(getByIDAndOwnerSql, ownerId, id)
+	row := db.QueryRow(getByIDAndOwnerSql, owner, id)
 
-	var title, content string
-	var status int
-	var updatedTime, createdTime string
+	var title, content, ownerId sql.NullString
+	var status sql.NullInt16
+	var updatedTime, createdTime sql.NullString
 
 	error := row.Scan(&id, &title, &content, &status, &ownerId, &createdTime, &updatedTime)
 
@@ -112,6 +115,8 @@ func (repo *TodoRepositoryStruct) GetByID(ownerId string, id int64) (models.Todo
 		CreatedTime: createdTime,
 		UpdateTime:  updatedTime,
 	}
+
+	db.Close()
 	return todo, nil
 }
 

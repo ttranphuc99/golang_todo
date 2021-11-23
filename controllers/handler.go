@@ -14,7 +14,7 @@ func handleBadRequest(c *gin.Context, errorResponse dtos.BadRequestResponse) {
 
 // handle success
 func handleSuccess(c *gin.Context, data interface{}) {
-	c.IndentedJSON(http.StatusOK, data)
+	c.JSON(http.StatusOK, data)
 }
 
 func handlerError(c *gin.Context, errorResponse dtos.BadRequestResponse) {

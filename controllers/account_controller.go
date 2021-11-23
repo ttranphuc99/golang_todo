@@ -10,7 +10,6 @@ import (
 )
 
 type AccountController interface {
-	Init() error
 	Login(c *gin.Context)
 }
 
@@ -18,13 +17,17 @@ type AccountControllerStruct struct {
 	service services.UserAccountService
 }
 
-func (controller *AccountControllerStruct) Init() error {
+func (controller *AccountControllerStruct) init() error {
 	tempService := &services.UserAccountServiceStruct{}
 	controller.service = tempService
 	return controller.service.Init()
 }
 
 func (controller *AccountControllerStruct) Login(c *gin.Context) {
+	if error := controller.init(); error != nil {
+		log.Panicln(error)
+		return
+	}
 	var user models.UserAccount
 
 	error := c.BindJSON(&user)
