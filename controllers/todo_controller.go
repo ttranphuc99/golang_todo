@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"todoapi/config"
@@ -71,6 +72,7 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 	result, err := controller.service.GetAllTodo(constants.TodoStatusAll)
 
 	if err != nil {
+		log.Panicln(err)
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -84,9 +86,10 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 
 // InsertTodo
 func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
-	var newTodo models.Todo
+	newTodo := &models.Todo{}
 
-	if err := c.BindJSON(&newTodo); err != nil {
+	if err := c.BindJSON(newTodo); err != nil {
+		log.Panicln(err)
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -96,9 +99,12 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 		return
 	}
 
-	newTodo, err := controller.service.InsertTodo(newTodo)
+	newTodo.OwnerId = c.GetString(config.TOKEN_CURRENT_USER_ID)
+
+	resultTodo, err := controller.service.InsertTodo(newTodo)
 
 	if err != nil {
+		log.Panicln(err)
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -108,7 +114,7 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, newTodo)
+	c.IndentedJSON(http.StatusCreated, resultTodo)
 }
 
 // UpdateTodo

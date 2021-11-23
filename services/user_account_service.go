@@ -52,9 +52,8 @@ func createToken(loginId string) (string, error) {
 	os.Setenv("ACCESS_SECRET", config.SECRET_KEY_JWT)
 
 	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	atClaims["user_id"] = loginId
-	atClaims["exp"] = time.Now().Add(time.Minute * 60).Unix()
+	atClaims[config.TOKEN_CURRENT_USER_ID] = loginId
+	atClaims[config.TOKEN_EXP] = time.Now().Add(time.Minute * 60).Unix()
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 

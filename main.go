@@ -15,7 +15,7 @@ func main() {
 	todoRoutes := router.Group("/todo")
 	{
 		todoRoutes.GET("/", middleware.CheckToken(), todoController.GetAllTodo)
-		todoRoutes.POST("/", todoController.InsertTodo)
+		todoRoutes.POST("/", middleware.CheckToken(), todoController.InsertTodo)
 		todoRoutes.PUT("/", todoController.UpdateTodo)
 		todoRoutes.GET("/:id", todoController.GetTodoByID)
 	}

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"todoapi/config"
@@ -40,8 +41,19 @@ func CheckToken() gin.HandlerFunc {
 		if err != nil {
 			handleUnauthorized(c, err.Error())
 		} else if !token.Valid {
+			log.Panicf("Token is invalid %s\n", reqToken)
 			handleUnauthorized(c, "Invalid Token")
 		}
+
+		claims, isOk := token.Claims.(jwt.MapClaims)
+
+		if isOk {
+			c.Set(config.TOKEN_CURRENT_USER_ID, claims[config.TOKEN_CURRENT_USER_ID])
+		} else {
+			log.Panicf("Cannot extract claims from token %s\n", reqToken)
+			handleUnauthorized(c, "Invalid Token")
+		}
+
 	}
 }
 

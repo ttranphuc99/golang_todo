@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"todoapi/models"
 	"todoapi/models/constants"
 	"todoapi/repository"
@@ -15,7 +16,7 @@ var todos = []models.Todo{
 
 type TodoService interface {
 	GetAllTodo(status int64) ([]models.Todo, error)
-	InsertTodo(newTodo models.Todo) (models.Todo, error)
+	InsertTodo(newTodo *models.Todo) (models.Todo, error)
 	GetTodoByID(id int64) (models.Todo, error)
 	UpdateTodo(newTodo models.Todo) (models.Todo, error)
 	Init() error
@@ -52,15 +53,15 @@ func (service *TodoServiceStruct) GetAllTodo(status int64) ([]models.Todo, error
 	return result, nil
 }
 
-func (t *TodoServiceStruct) InsertTodo(newTodo models.Todo) (models.Todo, error) {
-	_, err := findById(newTodo.ID)
+func (service *TodoServiceStruct) InsertTodo(newTodo *models.Todo) (models.Todo, error) {
+	todoRes, error := service.repository.InsertTodo(newTodo)
 
-	if err == nil {
-		return models.Todo{}, errors.New("duplicate id")
+	if error != nil {
+		log.Panic(error)
+		return models.Todo{}, error
 	}
 
-	todos = append(todos, newTodo)
-	return newTodo, nil
+	return todoRes, nil
 }
 
 func (t *TodoServiceStruct) GetTodoByID(id int64) (models.Todo, error) {
