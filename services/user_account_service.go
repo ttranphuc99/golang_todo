@@ -31,14 +31,14 @@ func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.Lo
 	userRes, error := service.repository.Login(user)
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return dtos.LoginDTO{}, error
 	}
 
 	token, error := createToken(user.LoginId)
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return dtos.LoginDTO{}, error
 	}
 

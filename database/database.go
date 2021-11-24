@@ -22,7 +22,7 @@ func (dbs *DatabaseStruct) Open() error {
 	tempDb, err := sql.Open("mysql", connectionStr)
 
 	if err != nil {
-		log.Panicln(err)
+		log.Println(err)
 		return err
 	}
 
@@ -35,7 +35,7 @@ func (dbs *DatabaseStruct) Close() error {
 	err := dbs.db.Close()
 
 	if err != nil {
-		log.Panicln(err)
+		log.Println(err)
 		return err
 	}
 

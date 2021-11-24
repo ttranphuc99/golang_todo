@@ -2,6 +2,8 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"todoapi/database"
 	"todoapi/models"
@@ -11,7 +13,9 @@ type TodoRepository interface {
 	GetAllTodo() ([]models.Todo, error)
 	Init() error
 	InsertTodo(todo *models.Todo) (models.Todo, error)
+	UpdateTodo(todo *models.Todo) (models.Todo, error)
 	GetTodoByIDAndOwner(id int64, owner string) (models.Todo, error)
+	CloseConnection() error
 }
 
 type TodoRepositoryStruct struct {
@@ -23,6 +27,16 @@ func (repo *TodoRepositoryStruct) Init() error {
 	repo.dbHandler = tempDb
 	error := repo.dbHandler.Open()
 	return error
+}
+
+func (repo *TodoRepositoryStruct) CloseConnection() error {
+	error := repo.dbHandler.GetDb().Close()
+
+	if error != nil {
+		log.Println(error)
+		return error
+	}
+	return nil
 }
 
 func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
@@ -46,7 +60,7 @@ func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 		error := rows.Scan(&id, &title, &content, &status, &owner, &createdTime, &updatedTime)
 
 		if error != nil {
-			log.Panicln(error)
+			log.Println(error)
 			return nil, error
 		}
 
@@ -62,12 +76,6 @@ func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 		todoLst = append(todoLst, todo)
 	}
 
-	error = db.Close()
-
-	if error != nil {
-		return nil, error
-	}
-
 	return todoLst, nil
 }
 
@@ -76,17 +84,38 @@ func (repo *TodoRepositoryStruct) InsertTodo(todo *models.Todo) (models.Todo, er
 	sqlResult, error := db.Exec(insertTodoSql, todo.Title, todo.Content, todo.Status, todo.OwnerId)
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return models.Todo{}, error
 	}
 
 	todo.ID, error = sqlResult.LastInsertId()
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return models.Todo{}, error
 	}
-	// db.Close()
+
+	return repo.GetTodoByIDAndOwner(todo.ID, todo.OwnerId.String)
+}
+
+func (repo *TodoRepositoryStruct) UpdateTodo(todo *models.Todo) (models.Todo, error) {
+	db := repo.dbHandler.GetDb()
+	sqlResult, error := db.Exec(updateTodoSql, todo.Title, todo.Content, todo.Status, todo.ID)
+
+	if error != nil {
+		log.Println(error)
+		return models.Todo{}, error
+	}
+
+	rowEffected, error := sqlResult.RowsAffected()
+
+	if error != nil {
+		log.Println(error)
+		return models.Todo{}, error
+	} else if rowEffected != 1 {
+		log.Println("row affected is " + fmt.Sprintf("%d", rowEffected))
+		return models.Todo{}, errors.New("row affected is " + fmt.Sprintf("%d", rowEffected))
+	}
 
 	return repo.GetTodoByIDAndOwner(todo.ID, todo.OwnerId.String)
 }
@@ -102,7 +131,7 @@ func (repo *TodoRepositoryStruct) GetTodoByIDAndOwner(id int64, owner string) (m
 	error := row.Scan(&id, &title, &content, &status, &ownerId, &createdTime, &updatedTime)
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return models.Todo{}, error
 	}
 
@@ -116,7 +145,6 @@ func (repo *TodoRepositoryStruct) GetTodoByIDAndOwner(id int64, owner string) (m
 		UpdateTime:  updatedTime,
 	}
 
-	db.Close()
 	return todo, nil
 }
 
@@ -131,7 +159,7 @@ SET
 title = ?,
 content = ?,
 status = ?,
-updated_date = UTC_TIMESTAMP(),
+updated_time = UTC_TIMESTAMP()
 WHERE id = ?
 `
 

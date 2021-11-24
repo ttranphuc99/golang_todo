@@ -29,7 +29,7 @@ func (repo *UserAccountRepositoryStruct) Login(user models.UserAccount) (models.
 	row, error := db.Query(loginSql, user.LoginId, user.Password)
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return models.UserAccountDTO{}, error
 	}
 
@@ -43,7 +43,7 @@ func (repo *UserAccountRepositoryStruct) Login(user models.UserAccount) (models.
 		error = row.Scan(&fullname, &role, &status, &createdTime, &updatedTime, &updatedBy)
 
 		if error != nil {
-			log.Panicln(error)
+			log.Println(error)
 			return models.UserAccountDTO{}, error
 		}
 
@@ -53,7 +53,7 @@ func (repo *UserAccountRepositoryStruct) Login(user models.UserAccount) (models.
 	error = db.Close()
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return models.UserAccountDTO{}, error
 	}
 

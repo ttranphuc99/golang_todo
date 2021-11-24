@@ -25,7 +25,7 @@ func (controller *AccountControllerStruct) init() error {
 
 func (controller *AccountControllerStruct) Login(c *gin.Context) {
 	if error := controller.init(); error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return
 	}
 	var user models.UserAccount
@@ -33,7 +33,7 @@ func (controller *AccountControllerStruct) Login(c *gin.Context) {
 	error := c.BindJSON(&user)
 
 	if error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		handleBadRequest(c, dtos.BadRequestResponse{
 			ErrorMessage: error.Error(),
 		})
@@ -42,8 +42,8 @@ func (controller *AccountControllerStruct) Login(c *gin.Context) {
 	resultUser, error := controller.service.Login(user)
 
 	if error != nil {
-		log.Panicln(error)
-		handlerError(c, dtos.BadRequestResponse{
+		log.Println(error)
+		handleError(c, dtos.BadRequestResponse{
 			ErrorMessage: error.Error(),
 		})
 	}

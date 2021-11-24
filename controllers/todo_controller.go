@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"todoapi/config"
 	"todoapi/dtos"
-	"todoapi/models"
 	"todoapi/models/constants"
 	"todoapi/services"
 
@@ -33,7 +34,7 @@ func (controller *TodoControllerStruct) init() error {
 // GetAllTodo
 func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 	if error := controller.init(); error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return
 	}
 
@@ -76,7 +77,7 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 	result, err := controller.service.GetAllTodo(constants.TodoStatusAll)
 
 	if err != nil {
-		log.Panicln(err)
+		log.Println(err)
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -91,14 +92,14 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 // InsertTodo
 func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 	if error := controller.init(); error != nil {
-		log.Panicln(error)
+		log.Println(error)
 		return
 	}
 
 	todoDTO := &dtos.TodoDTO{}
 
 	if err := c.BindJSON(todoDTO); err != nil {
-		log.Panicln(err)
+		log.Println(err)
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -113,7 +114,7 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 	resultTodo, err := controller.service.InsertTodo(todoDTO)
 
 	if err != nil {
-		log.Panicln(err)
+		log.Println(err)
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -128,7 +129,12 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 
 // UpdateTodo
 func (controller *TodoControllerStruct) UpdateTodo(c *gin.Context) {
-	var newTodo models.Todo
+	if error := controller.init(); error != nil {
+		log.Println(error)
+		return
+	}
+
+	var newTodo dtos.TodoDTO
 	if err := c.BindJSON(&newTodo); err != nil {
 		handleBadRequest(
 			c,
@@ -139,9 +145,19 @@ func (controller *TodoControllerStruct) UpdateTodo(c *gin.Context) {
 		return
 	}
 
-	newTodo, err := controller.service.UpdateTodo(newTodo)
+	newTodo.OwnerId = c.GetString(config.TOKEN_CURRENT_USER_ID)
+
+	updatedTodo, err := controller.service.UpdateTodo(newTodo)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			handleNotFound(
+				c,
+				dtos.BadRequestResponse{
+					ErrorMessage: "Not found todo with ID " + fmt.Sprintf("%d", newTodo.ID) + " of " + newTodo.OwnerId,
+				})
+			return
+		}
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{
@@ -151,11 +167,16 @@ func (controller *TodoControllerStruct) UpdateTodo(c *gin.Context) {
 		return
 	}
 
-	handleSuccess(c, newTodo)
+	handleSuccess(c, updatedTodo)
 }
 
 // GetTodoByID
 func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
+	if error := controller.init(); error != nil {
+		log.Println(error)
+		return
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 	if err != nil {
@@ -168,9 +189,18 @@ func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
 		return
 	}
 
-	todo, err := controller.service.GetTodoByID(id)
+	owner := c.GetString(config.TOKEN_CURRENT_USER_ID)
+	todo, err := controller.service.GetTodoByID(id, owner)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			handleNotFound(
+				c,
+				dtos.BadRequestResponse{
+					ErrorMessage: "Not found todo with ID " + fmt.Sprintf("%d", id) + " of " + owner,
+				})
+			return
+		}
 		handleBadRequest(
 			c,
 			dtos.BadRequestResponse{

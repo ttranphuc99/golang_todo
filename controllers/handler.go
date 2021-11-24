@@ -17,6 +17,10 @@ func handleSuccess(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, data)
 }
 
-func handlerError(c *gin.Context, errorResponse dtos.BadRequestResponse) {
-	c.IndentedJSON(http.StatusInternalServerError, errorResponse)
+func handleError(c *gin.Context, errorResponse dtos.BadRequestResponse) {
+	c.JSON(http.StatusInternalServerError, errorResponse)
+}
+
+func handleNotFound(c *gin.Context, errorResponse dtos.BadRequestResponse) {
+	c.JSON(http.StatusNotFound, errorResponse)
 }

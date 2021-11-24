@@ -1,22 +1,17 @@
 package services
 
 import (
-	"errors"
 	"log"
 	"todoapi/dtos"
 	todomapper "todoapi/mapper/todo_mapper"
-	"todoapi/models"
-	"todoapi/models/constants"
 	"todoapi/repository"
 )
-
-var todos = []models.Todo{}
 
 type TodoService interface {
 	GetAllTodo(status int64) ([]dtos.TodoDTO, error)
 	InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDTO, error)
-	GetTodoByID(id int64) (models.Todo, error)
-	UpdateTodo(newTodo models.Todo) (models.Todo, error)
+	GetTodoByID(id int64, ownerId string) (dtos.TodoDTO, error)
+	UpdateTodo(newTodo dtos.TodoDTO) (dtos.TodoDTO, error)
 	Init() error
 }
 
@@ -31,24 +26,25 @@ func (service *TodoServiceStruct) Init() error {
 }
 
 func (service *TodoServiceStruct) GetAllTodo(status int64) ([]dtos.TodoDTO, error) {
-	if status != constants.TodoStatusAll {
-		todosRes := []models.Todo{}
+	// if status != constants.TodoStatusAll {
+	// 	todosRes := []models.Todo{}
 
-		for _, todo := range todos {
-			if status == int64(todo.Status.Int16) {
-				todosRes = append(todosRes, todo)
-			}
-		}
+	// 	for _, todo := range todos {
+	// 		if status == int64(todo.Status.Int16) {
+	// 			todosRes = append(todosRes, todo)
+	// 		}
+	// 	}
 
-		return todomapper.ToDTOs(todosRes), nil
-	}
+	// 	return todomapper.ToDTOs(todosRes), nil
+	// }
 
 	result, err := service.repository.GetAllTodo()
 
 	if err != nil {
 		return nil, err
 	}
-	return todomapper.ToDTOs(result), nil
+
+	return todomapper.ToDTOs(result), service.repository.CloseConnection()
 }
 
 func (service *TodoServiceStruct) InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDTO, error) {
@@ -60,36 +56,36 @@ func (service *TodoServiceStruct) InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDT
 		return dtos.TodoDTO{}, error
 	}
 
-	return todomapper.ToDTO(todoRes), nil
+	return todomapper.ToDTO(todoRes), service.repository.CloseConnection()
 }
 
-func (t *TodoServiceStruct) GetTodoByID(id int64) (models.Todo, error) {
-	todo, err := findById(id)
+func (service *TodoServiceStruct) GetTodoByID(id int64, ownerId string) (dtos.TodoDTO, error) {
+	resultTodo, error := service.repository.GetTodoByIDAndOwner(id, ownerId)
+
+	if error != nil {
+		log.Println(error)
+		return dtos.TodoDTO{}, error
+	}
+
+	return todomapper.ToDTO(resultTodo), service.repository.CloseConnection()
+}
+
+func (service *TodoServiceStruct) UpdateTodo(newTodo dtos.TodoDTO) (dtos.TodoDTO, error) {
+	oldTodo, err := service.repository.GetTodoByIDAndOwner(newTodo.ID, newTodo.OwnerId)
 
 	if err != nil {
-		return models.Todo{}, err
-	} else {
-		return *todo, nil
+		return dtos.TodoDTO{}, err
 	}
-}
 
-func (t *TodoServiceStruct) UpdateTodo(newTodo models.Todo) (models.Todo, error) {
-	oldTodo, err := findById(newTodo.ID)
+	oldTodo.Title.String = newTodo.Title
+	oldTodo.Content.String = newTodo.Content
+	oldTodo.Status.Int16 = newTodo.Status
 
-	if err != nil {
-		return models.Todo{}, err
+	updatedTodo, error := service.repository.UpdateTodo(&oldTodo)
+
+	if error != nil {
+		return dtos.TodoDTO{}, error
 	}
-	oldTodo.Content = newTodo.Content
-	oldTodo.Status = newTodo.Status
 
-	return *oldTodo, nil
-}
-
-func findById(id int64) (todo *models.Todo, e error) {
-	for idx, todo := range todos {
-		if id == todo.ID {
-			return &todos[idx], nil
-		}
-	}
-	return &models.Todo{}, errors.New("not found with id " + string(id))
+	return todomapper.ToDTO(updatedTodo), service.repository.CloseConnection()
 }

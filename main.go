@@ -16,8 +16,8 @@ func main() {
 	{
 		todoRoutes.GET("/", middleware.CheckToken(), todoController.GetAllTodo)
 		todoRoutes.POST("/", middleware.CheckToken(), todoController.InsertTodo)
-		todoRoutes.PUT("/", todoController.UpdateTodo)
-		todoRoutes.GET("/:id", todoController.GetTodoByID)
+		todoRoutes.PUT("/", middleware.CheckToken(), todoController.UpdateTodo)
+		todoRoutes.GET("/:id", middleware.CheckToken(), todoController.GetTodoByID)
 	}
 
 	router.POST("/login", accountController.Login)
