@@ -46,6 +46,7 @@ func (controller *AccountControllerStruct) Login(c *gin.Context) {
 		handleError(c, dtos.BadRequestResponse{
 			ErrorMessage: error.Error(),
 		})
+		return
 	}
 
 	handleSuccess(c, resultUser)

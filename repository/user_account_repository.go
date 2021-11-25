@@ -26,28 +26,24 @@ func (repo *UserAccountRepositoryStruct) Init() error {
 
 func (repo *UserAccountRepositoryStruct) Login(user models.UserAccount) (models.UserAccountDTO, error) {
 	db := repo.dbHandler.GetDb()
-	row, error := db.Query(loginSql, user.LoginId, user.Password)
+	row := db.QueryRow(loginSql, user.LoginId, user.Password)
 
+	var fullname, createdTime, updatedTime string
+	var updatedBy sql.NullString
+	var role, status int
+
+	error := row.Scan(&fullname, &role, &status, &createdTime, &updatedTime, &updatedBy)
+	error.Error()
 	if error != nil {
 		log.Println(error)
 		return models.UserAccountDTO{}, error
 	}
 
-	var result models.UserAccountDTO
+	result := models.UserAccountDTO{user.LoginId, fullname, role, status, createdTime, updatedTime, updatedBy.String}
 
-	for row.Next() {
-		var fullname, createdTime, updatedTime string
-		var updatedBy sql.NullString
-		var role, status int
-
-		error = row.Scan(&fullname, &role, &status, &createdTime, &updatedTime, &updatedBy)
-
-		if error != nil {
-			log.Println(error)
-			return models.UserAccountDTO{}, error
-		}
-
-		result = models.UserAccountDTO{user.LoginId, fullname, role, status, createdTime, updatedTime, updatedBy.String}
+	if error != nil {
+		log.Println(error)
+		return models.UserAccountDTO{}, error
 	}
 
 	error = db.Close()
