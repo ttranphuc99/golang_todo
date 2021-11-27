@@ -41,7 +41,7 @@ func CheckToken() gin.HandlerFunc {
 		if err != nil {
 			handleUnauthorized(c, err.Error())
 		} else if !token.Valid {
-			log.Panicf("Token is invalid %s\n", reqToken)
+			log.Printf("Token is invalid %s\n", reqToken)
 			handleUnauthorized(c, "Invalid Token")
 		}
 
@@ -49,6 +49,7 @@ func CheckToken() gin.HandlerFunc {
 
 		if isOk {
 			c.Set(config.TOKEN_CURRENT_USER_ID, claims[config.TOKEN_CURRENT_USER_ID])
+			c.Set(config.TOKEN_CURRENT_USER_ROLE, claims[config.TOKEN_CURRENT_USER_ROLE])
 		} else {
 			log.Panicf("Cannot extract claims from token %s\n", reqToken)
 			handleUnauthorized(c, "Invalid Token")

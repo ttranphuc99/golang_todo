@@ -1,4 +1,5 @@
 package config
 
-const TOKEN_CURRENT_USER_ID = "CURRENT_USER_ID"
-const TOKEN_EXP = "EXP"
+const TOKEN_CURRENT_USER_ID = "current_user_id"
+const TOKEN_CURRENT_USER_ROLE = "current_user_role"
+const TOKEN_EXP = "exp"

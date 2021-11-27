@@ -11,6 +11,9 @@ import (
 
 type TodoRepository interface {
 	GetAllTodo() ([]models.Todo, error)
+	GetAllTodoByStatus(status int) ([]models.Todo, error)
+	GetAllTodoByOwnerId(ownerId string) ([]models.Todo, error)
+	GetAllTodoByOwnerIdAndStatus(ownerId string, statusReq int) ([]models.Todo, error)
 	Init() error
 	InsertTodo(todo *models.Todo) (models.Todo, error)
 	UpdateTodo(todo *models.Todo) (models.Todo, error)
@@ -48,7 +51,47 @@ func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 		return nil, error
 	}
 
-	var todoLst []models.Todo
+	return getResultTodoList(rows)
+}
+
+func (repo *TodoRepositoryStruct) GetAllTodoByStatus(status int) ([]models.Todo, error) {
+	db := repo.dbHandler.GetDb()
+	rows, error := db.Query(getAllTodoByStatusSql, status)
+
+	if error != nil {
+		log.Panic(error)
+		return nil, error
+	}
+
+	return getResultTodoList(rows)
+}
+
+func (repo *TodoRepositoryStruct) GetAllTodoByOwnerId(ownerId string) ([]models.Todo, error) {
+	db := repo.dbHandler.GetDb()
+	rows, error := db.Query(getAllTodoByOwnerSql, ownerId)
+
+	if error != nil {
+		log.Panic(error)
+		return nil, error
+	}
+
+	return getResultTodoList(rows)
+}
+
+func (repo *TodoRepositoryStruct) GetAllTodoByOwnerIdAndStatus(ownerId string, statusReq int) ([]models.Todo, error) {
+	db := repo.dbHandler.GetDb()
+	rows, error := db.Query(getAllTodoByOwnerAndStatusSql, ownerId, statusReq)
+
+	if error != nil {
+		log.Panic(error)
+		return nil, error
+	}
+
+	return getResultTodoList(rows)
+}
+
+func getResultTodoList(rows *sql.Rows) ([]models.Todo, error) {
+	todoLst := []models.Todo{}
 
 	for rows.Next() {
 		var id int64
@@ -75,7 +118,6 @@ func (repo *TodoRepositoryStruct) GetAllTodo() ([]models.Todo, error) {
 		}
 		todoLst = append(todoLst, todo)
 	}
-
 	return todoLst, nil
 }
 
@@ -173,8 +215,16 @@ SELECT id, title, content, status, owner_id, created_time, updated_time
 FROM todo
 `
 
+const getAllTodoByStatusSql = `
+SELECT id, title, content, status, owner_id, created_time, updated_time 
+FROM todo 
+WHERE status = ?
+`
+
 const getAllTodoByOwnerAndStatusSql = `
-SELECT * FROM todo WHERE owner_id = ? AND status = ?
+SELECT id, title, content, status, owner_id, created_time, updated_time
+FROM todo 
+WHERE owner_id = ? AND status = ?
 `
 
 const getByIDAndOwnerSql = `

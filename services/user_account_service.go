@@ -35,7 +35,7 @@ func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.Lo
 		return dtos.LoginDTO{}, error
 	}
 
-	token, error := createToken(user.LoginId)
+	token, error := createToken(user.LoginId, userRes.Role)
 
 	if error != nil {
 		log.Println(error)
@@ -45,7 +45,7 @@ func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.Lo
 	return dtos.LoginDTO{Token: token, User: userRes}, nil
 }
 
-func createToken(loginId string) (string, error) {
+func createToken(loginId string, role int) (string, error) {
 	var err error
 
 	// create access token
@@ -53,7 +53,8 @@ func createToken(loginId string) (string, error) {
 
 	atClaims := jwt.MapClaims{}
 	atClaims[config.TOKEN_CURRENT_USER_ID] = loginId
-	atClaims[config.TOKEN_EXP] = time.Now().Add(time.Minute * 60).Unix()
+	atClaims[config.TOKEN_CURRENT_USER_ROLE] = role
+	atClaims[config.TOKEN_EXP] = time.Now().Add(time.Minute * 30).Unix()
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 

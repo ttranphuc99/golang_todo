@@ -40,11 +40,12 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 
 	// get status filter
 	statusFilter := c.Query("status")
+	status := constants.TodoStatusAll
 
 	// status filter has value
 	if statusFilter != "" {
 		// parse value to int
-		status, err := strconv.ParseInt(statusFilter, 10, 64)
+		parsedStatus, err := strconv.Atoi(statusFilter)
 
 		// parse value failed
 		if err != nil {
@@ -57,24 +58,14 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 			return
 		}
 
-		// parse value success
-		result, err := controller.service.GetAllTodo(status)
-
-		if err != nil {
-			handleBadRequest(
-				c,
-				dtos.BadRequestResponse{
-					ErrorMessage: err.Error(),
-				},
-			)
-			return
-		}
-		handleSuccess(c, result)
-		return
+		status = parsedStatus
 	}
 
+	currentUserId := c.GetString(config.TOKEN_CURRENT_USER_ID)
+	currentUserRole := int(c.GetFloat64(config.TOKEN_CURRENT_USER_ROLE))
+
 	// get all to do
-	result, err := controller.service.GetAllTodo(constants.TodoStatusAll)
+	result, err := controller.service.GetAllTodo(status, currentUserId, currentUserRole)
 
 	if err != nil {
 		log.Println(err)

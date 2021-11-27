@@ -4,11 +4,13 @@ import (
 	"log"
 	"todoapi/dtos"
 	todomapper "todoapi/mapper/todo_mapper"
+	"todoapi/models"
+	"todoapi/models/constants"
 	"todoapi/repository"
 )
 
 type TodoService interface {
-	GetAllTodo(status int64) ([]dtos.TodoDTO, error)
+	GetAllTodo(status int, ownerId string, role int) ([]dtos.TodoDTO, error)
 	InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDTO, error)
 	GetTodoByID(id int64, ownerId string) (dtos.TodoDTO, error)
 	UpdateTodo(newTodo dtos.TodoDTO) (dtos.TodoDTO, error)
@@ -25,20 +27,23 @@ func (service *TodoServiceStruct) Init() error {
 	return service.repository.Init()
 }
 
-func (service *TodoServiceStruct) GetAllTodo(status int64) ([]dtos.TodoDTO, error) {
-	// if status != constants.TodoStatusAll {
-	// 	todosRes := []models.Todo{}
+func (service *TodoServiceStruct) GetAllTodo(status int, ownerId string, role int) ([]dtos.TodoDTO, error) {
+	var result []models.Todo
+	var err error
 
-	// 	for _, todo := range todos {
-	// 		if status == int64(todo.Status.Int16) {
-	// 			todosRes = append(todosRes, todo)
-	// 		}
-	// 	}
-
-	// 	return todomapper.ToDTOs(todosRes), nil
-	// }
-
-	result, err := service.repository.GetAllTodo()
+	if status != constants.TodoStatusAll {
+		if role != constants.RoleAdmin {
+			result, err = service.repository.GetAllTodoByOwnerIdAndStatus(ownerId, status)
+		} else {
+			result, err = service.repository.GetAllTodoByStatus(status)
+		}
+	} else {
+		if role != constants.RoleAdmin {
+			result, err = service.repository.GetAllTodoByOwnerId(ownerId)
+		} else {
+			result, err = service.repository.GetAllTodo()
+		}
+	}
 
 	if err != nil {
 		return nil, err

@@ -33,13 +33,19 @@ func (repo *UserAccountRepositoryStruct) Login(user models.UserAccount) (models.
 	var role, status int
 
 	error := row.Scan(&fullname, &role, &status, &createdTime, &updatedTime, &updatedBy)
-	error.Error()
 	if error != nil {
 		log.Println(error)
 		return models.UserAccountDTO{}, error
 	}
 
-	result := models.UserAccountDTO{user.LoginId, fullname, role, status, createdTime, updatedTime, updatedBy.String}
+	result := models.UserAccountDTO{
+		LoginId:     user.LoginId,
+		Fullname:    fullname,
+		Role:        role,
+		Status:      status,
+		CreatedTime: createdTime,
+		UpdatedTime: updatedTime,
+		UpdatedBy:   updatedBy.String}
 
 	if error != nil {
 		log.Println(error)

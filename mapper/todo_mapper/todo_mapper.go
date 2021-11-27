@@ -31,7 +31,7 @@ func ToDTO(model models.Todo) dtos.TodoDTO {
 }
 
 func ToDTOs(models []models.Todo) []dtos.TodoDTO {
-	var dtos []dtos.TodoDTO
+	dtos := []dtos.TodoDTO{}
 	for _, model := range models {
 		dtos = append(dtos, ToDTO(model))
 	}
