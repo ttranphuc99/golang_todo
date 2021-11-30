@@ -27,6 +27,10 @@ func (service *UserAccountServiceStruct) Init() error {
 	return service.repository.Init()
 }
 
+func (service *UserAccountServiceStruct) InitWith(repository repository.UserAccountRepository) {
+	service.repository = repository
+}
+
 func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.LoginDTO, error) {
 	userRes, error := service.repository.Login(user)
 
