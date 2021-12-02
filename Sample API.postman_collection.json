@@ -8,6 +8,16 @@
 		{
 			"name": "list todo",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{localJwt}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
@@ -31,11 +41,21 @@
 		{
 			"name": "insert todo",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{localJwt}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"id\": 4,\r\n    \"content\": \"content 333\",\r\n    \"status\": 0\r\n}",
+					"raw": "{\r\n    \"title\": \"title user\",\r\n    \"content\": \"content userrrr\",\r\n    \"status\": 0\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -57,16 +77,26 @@
 		{
 			"name": "get todo by id",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{localJwt}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{local}}/todo/4",
+					"raw": "{{local}}/todo/18",
 					"host": [
 						"{{local}}"
 					],
 					"path": [
 						"todo",
-						"4"
+						"18"
 					]
 				}
 			},
@@ -75,11 +105,21 @@
 		{
 			"name": "update todo",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{localJwt}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "PUT",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"id\": 4,\r\n    \"content\": \"content 3s33\",\r\n    \"status\": 0\r\n}",
+					"raw": "{\r\n    \"id\": 16,\r\n    \"title\": \"update title user ne\",\r\n    \"content\": \"content da duoc update\",\r\n    \"status\": 1\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -93,6 +133,60 @@
 					],
 					"path": [
 						"todo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"loginId\": \"admin\",\r\n    \"password\": \"admin\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{local}}/login",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete todo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{localJwt}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{local}}/todo/1",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"todo",
+						"1"
 					]
 				}
 			},
