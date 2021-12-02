@@ -15,10 +15,11 @@ func main() {
 
 	todoRoutes := router.Group("/todo")
 	{
-		todoRoutes.GET("/", middleware.CheckToken(), todoController.GetAllTodo, gin.CustomRecovery(middleware.Recover()))
-		todoRoutes.POST("/", middleware.CheckToken(), todoController.InsertTodo, gin.CustomRecovery(middleware.Recover()))
-		todoRoutes.PUT("/", middleware.CheckToken(), todoController.UpdateTodo, gin.CustomRecovery(middleware.Recover()))
-		todoRoutes.GET("/:id", middleware.CheckToken(), todoController.GetTodoByID, gin.CustomRecovery(middleware.Recover()))
+		todoRoutes.GET("/", middleware.CheckToken(), todoController.GetAllTodo)
+		todoRoutes.POST("/", middleware.CheckToken(), todoController.InsertTodo)
+		todoRoutes.PUT("/", middleware.CheckToken(), todoController.UpdateTodo)
+		todoRoutes.GET("/:id", middleware.CheckToken(), todoController.GetTodoByID)
+		todoRoutes.DELETE("/:id", middleware.CheckToken(), todoController.DeleteTodo)
 	}
 
 	router.POST("/login", accountController.Login)

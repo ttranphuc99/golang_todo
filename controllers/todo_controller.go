@@ -19,6 +19,7 @@ type TodoController interface {
 	InsertTodo(c *gin.Context)
 	UpdateTodo(c *gin.Context)
 	GetTodoByID(c *gin.Context)
+	DeleteTodo(c *gin.Context)
 }
 
 type TodoControllerStruct struct {
@@ -181,7 +182,14 @@ func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
 	}
 
 	owner := c.GetString(config.TOKEN_CURRENT_USER_ID)
-	todo, err := controller.service.GetTodoByID(id, owner)
+	currentUserRole := int(c.GetFloat64(config.TOKEN_CURRENT_USER_ROLE))
+
+	var todo dtos.TodoDTO
+	if currentUserRole == constants.RoleAdmin {
+		todo, err = controller.service.GetTodoByID(id)
+	} else {
+		todo, err = controller.service.GetTodoByIDAndOwner(id, owner)
+	}
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -202,4 +210,47 @@ func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
 	}
 
 	handleSuccess(c, todo)
+}
+
+// delete todo
+func (controller *TodoControllerStruct) DeleteTodo(c *gin.Context) {
+	if error := controller.init(); error != nil {
+		log.Println(error)
+		return
+	}
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		handleBadRequest(
+			c,
+			dtos.BadRequestResponse{
+				ErrorMessage: err.Error(),
+			},
+		)
+		return
+	}
+
+	owner := c.GetString(config.TOKEN_CURRENT_USER_ID)
+	err = controller.service.DeleteTodo(id, owner)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			handleNotFound(
+				c,
+				dtos.BadRequestResponse{
+					ErrorMessage: "Not found todo with ID " + fmt.Sprintf("%d", id) + " of " + owner,
+				})
+			return
+		}
+		handleBadRequest(
+			c,
+			dtos.BadRequestResponse{
+				ErrorMessage: err.Error(),
+			},
+		)
+		return
+	}
+
+	handleSuccess(c, dtos.MessageDTO{Message: "Action success."})
 }

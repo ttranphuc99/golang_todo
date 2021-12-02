@@ -18,7 +18,9 @@ type TodoRepository interface {
 	InsertTodo(todo *models.Todo) (models.Todo, error)
 	UpdateTodo(todo *models.Todo) (models.Todo, error)
 	GetTodoByIDAndOwner(id int64, owner string) (models.Todo, error)
+	GetTodoByID(id int64) (models.Todo, error)
 	CloseConnection() error
+	DeleteTodoById(id int64) error
 }
 
 type TodoRepositoryStruct struct {
@@ -190,6 +192,59 @@ func (repo *TodoRepositoryStruct) GetTodoByIDAndOwner(id int64, owner string) (m
 	return todo, nil
 }
 
+func (repo *TodoRepositoryStruct) GetTodoByID(id int64) (models.Todo, error) {
+	db := repo.dbHandler.GetDb()
+	row := db.QueryRow(getByID, id)
+
+	var title, content, ownerId sql.NullString
+	var status sql.NullInt16
+	var updatedTime, createdTime sql.NullString
+
+	error := row.Scan(&id, &title, &content, &status, &ownerId, &createdTime, &updatedTime)
+
+	if error != nil {
+		log.Println(error)
+		return models.Todo{}, error
+	}
+
+	todo := models.Todo{
+		ID:          id,
+		Title:       title,
+		Content:     content,
+		Status:      status,
+		OwnerId:     ownerId,
+		CreatedTime: createdTime,
+		UpdateTime:  updatedTime,
+	}
+
+	return todo, nil
+}
+
+func (repo *TodoRepositoryStruct) DeleteTodoById(id int64) error {
+	db := repo.dbHandler.GetDb()
+	sqlResult, error := db.Exec(deleteTodo, id)
+
+	if error != nil {
+		log.Println(error)
+		return error
+	}
+
+	rowAffect, error := sqlResult.RowsAffected()
+
+	if error != nil {
+		log.Println(error)
+		return error
+	}
+
+	if rowAffect == 0 {
+		msg := fmt.Sprintf("Delete failed with ID = %v.", id)
+		log.Println(msg)
+		return errors.New(msg)
+	}
+
+	return nil
+}
+
 const insertTodoSql = `
 INSERT INTO 
 todo(title, content, status, owner_id, created_time, updated_time) 
@@ -231,4 +286,15 @@ const getByIDAndOwnerSql = `
 SELECT id, title, content, status, owner_id, created_time, updated_time
 FROM todo
 WHERE owner_id = ? AND id = ?
+`
+
+const getByID = `
+SELECT id, title, content, status, owner_id, created_time, updated_time
+FROM todo
+WHERE id = ?
+`
+
+const deleteTodo = `
+DELETE FROM todo
+WHERE id = ?
 `

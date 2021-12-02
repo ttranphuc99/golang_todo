@@ -12,8 +12,10 @@ import (
 type TodoService interface {
 	GetAllTodo(status int, ownerId string, role int) ([]dtos.TodoDTO, error)
 	InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDTO, error)
-	GetTodoByID(id int64, ownerId string) (dtos.TodoDTO, error)
+	GetTodoByIDAndOwner(id int64, ownerId string) (dtos.TodoDTO, error)
+	GetTodoByID(id int64) (dtos.TodoDTO, error)
 	UpdateTodo(newTodo dtos.TodoDTO) (dtos.TodoDTO, error)
+	DeleteTodo(id int64, ownerId string) error
 	Init() error
 }
 
@@ -64,8 +66,19 @@ func (service *TodoServiceStruct) InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDT
 	return todomapper.ToDTO(todoRes), service.repository.CloseConnection()
 }
 
-func (service *TodoServiceStruct) GetTodoByID(id int64, ownerId string) (dtos.TodoDTO, error) {
+func (service *TodoServiceStruct) GetTodoByIDAndOwner(id int64, ownerId string) (dtos.TodoDTO, error) {
 	resultTodo, error := service.repository.GetTodoByIDAndOwner(id, ownerId)
+
+	if error != nil {
+		log.Println(error)
+		return dtos.TodoDTO{}, error
+	}
+
+	return todomapper.ToDTO(resultTodo), service.repository.CloseConnection()
+}
+
+func (service *TodoServiceStruct) GetTodoByID(id int64) (dtos.TodoDTO, error) {
+	resultTodo, error := service.repository.GetTodoByID(id)
 
 	if error != nil {
 		log.Println(error)
@@ -93,4 +106,22 @@ func (service *TodoServiceStruct) UpdateTodo(newTodo dtos.TodoDTO) (dtos.TodoDTO
 	}
 
 	return todomapper.ToDTO(updatedTodo), service.repository.CloseConnection()
+}
+
+func (service *TodoServiceStruct) DeleteTodo(id int64, ownerId string) error {
+	_, error := service.repository.GetTodoByIDAndOwner(id, ownerId)
+
+	if error != nil {
+		log.Println(error)
+		return error
+	}
+
+	error = service.repository.DeleteTodoById(id)
+
+	if error != nil {
+		log.Println(error)
+		return error
+	}
+
+	return service.repository.CloseConnection()
 }
