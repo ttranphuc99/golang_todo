@@ -24,9 +24,12 @@ type TodoServiceStruct struct {
 }
 
 func (service *TodoServiceStruct) Init() error {
-	tempRepo := &repository.TodoRepositoryStruct{}
-	service.repository = tempRepo
+	service.repository = &repository.TodoRepositoryStruct{}
 	return service.repository.Init()
+}
+
+func (service *TodoServiceStruct) InitWith(repository repository.TodoRepository) {
+	service.repository = repository
 }
 
 func (service *TodoServiceStruct) GetAllTodo(status int, ownerId string, role int) ([]dtos.TodoDTO, error) {
@@ -48,6 +51,7 @@ func (service *TodoServiceStruct) GetAllTodo(status int, ownerId string, role in
 	}
 
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -59,7 +63,7 @@ func (service *TodoServiceStruct) InsertTodo(todoDTO *dtos.TodoDTO) (dtos.TodoDT
 	todoRes, error := service.repository.InsertTodo(&todoModel)
 
 	if error != nil {
-		log.Panic(error)
+		log.Println(error)
 		return dtos.TodoDTO{}, error
 	}
 
