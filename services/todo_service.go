@@ -2,6 +2,7 @@ package services
 
 import (
 	"log"
+	"todoapi/config"
 	"todoapi/dtos"
 	todomapper "todoapi/mapper/todo_mapper"
 	"todoapi/models"
@@ -16,20 +17,18 @@ type TodoService interface {
 	GetTodoByID(id int64) (dtos.TodoDTO, error)
 	UpdateTodo(newTodo dtos.TodoDTO) (dtos.TodoDTO, error)
 	DeleteTodo(id int64, ownerId string) error
-	Init() error
 }
 
 type TodoServiceStruct struct {
 	repository repository.TodoRepository
+	config     config.Config
 }
 
-func (service *TodoServiceStruct) Init() error {
-	service.repository = &repository.TodoRepositoryStruct{}
-	return service.repository.Init()
-}
-
-func (service *TodoServiceStruct) InitWith(repository repository.TodoRepository) {
-	service.repository = repository
+func NewTodoServiceStruct(repository repository.TodoRepository, config config.Config) *TodoServiceStruct {
+	return &TodoServiceStruct{
+		repository: repository,
+		config:     config,
+	}
 }
 
 func (service *TodoServiceStruct) GetAllTodo(status int, ownerId string, role int) ([]dtos.TodoDTO, error) {

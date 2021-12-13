@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"todoapi/config"
 	"todoapi/database"
 	"todoapi/models"
 )
@@ -14,7 +15,6 @@ type TodoRepository interface {
 	GetAllTodoByStatus(status int) ([]models.Todo, error)
 	GetAllTodoByOwnerId(ownerId string) ([]models.Todo, error)
 	GetAllTodoByOwnerIdAndStatus(ownerId string, statusReq int) ([]models.Todo, error)
-	Init() error
 	InsertTodo(todo *models.Todo) (models.Todo, error)
 	UpdateTodo(todo *models.Todo) (models.Todo, error)
 	GetTodoByIDAndOwner(id int64, owner string) (models.Todo, error)
@@ -25,13 +25,15 @@ type TodoRepository interface {
 
 type TodoRepositoryStruct struct {
 	dbHandler database.Database
+	config    config.Config
 }
 
-func (repo *TodoRepositoryStruct) Init() error {
-	tempDb := &database.DatabaseStruct{}
-	repo.dbHandler = tempDb
-	error := repo.dbHandler.Open()
-	return error
+func NewTodoRepository(dbHandler database.Database, config config.Config) (*TodoRepositoryStruct, error) {
+	repo := &TodoRepositoryStruct{
+		dbHandler: dbHandler,
+		config:    config,
+	}
+	return repo, dbHandler.Open()
 }
 
 func (repo *TodoRepositoryStruct) CloseConnection() error {

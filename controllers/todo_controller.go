@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"strconv"
 	"todoapi/config"
+	"todoapi/database"
 	"todoapi/dtos"
 	"todoapi/models/constants"
+	"todoapi/repository"
 	"todoapi/services"
 
 	"github.com/gin-gonic/gin"
@@ -24,12 +26,27 @@ type TodoController interface {
 
 type TodoControllerStruct struct {
 	service services.TodoService
+	config  config.Config
+}
+
+func NewTodoController(config config.Config) *TodoControllerStruct {
+	return &TodoControllerStruct{
+		config: config,
+	}
 }
 
 // init
 func (controller *TodoControllerStruct) init() error {
-	controller.service = &services.TodoServiceStruct{}
-	return controller.service.Init()
+	dbHandler := database.NewDatabaseStruct(controller.config)
+	repository, error := repository.NewTodoRepository(dbHandler, controller.config)
+
+	if error != nil {
+		log.Println(error)
+		return error
+	}
+
+	controller.service = services.NewTodoServiceStruct(repository, controller.config)
+	return nil
 }
 
 // GetAllTodo
@@ -53,7 +70,7 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 			handleBadRequest(
 				c,
 				dtos.BadRequestResponse{
-					ErrorMessage: config.InvalidTodoStatusArgument,
+					ErrorMessage: controller.config.InvalidTodoStatusArgument,
 				},
 			)
 			return
@@ -62,8 +79,8 @@ func (controller *TodoControllerStruct) GetAllTodo(c *gin.Context) {
 		status = parsedStatus
 	}
 
-	currentUserId := c.GetString(config.TOKEN_CURRENT_USER_ID)
-	currentUserRole := int(c.GetFloat64(config.TOKEN_CURRENT_USER_ROLE))
+	currentUserId := c.GetString(controller.config.TokenCurrentUserId)
+	currentUserRole := int(c.GetFloat64(controller.config.TokenCurrentUserRole))
 
 	// get all to do
 	result, err := controller.service.GetAllTodo(status, currentUserId, currentUserRole)
@@ -101,7 +118,7 @@ func (controller *TodoControllerStruct) InsertTodo(c *gin.Context) {
 		return
 	}
 
-	todoDTO.OwnerId = c.GetString(config.TOKEN_CURRENT_USER_ID)
+	todoDTO.OwnerId = c.GetString(controller.config.TokenCurrentUserId)
 
 	resultTodo, err := controller.service.InsertTodo(todoDTO)
 
@@ -137,7 +154,7 @@ func (controller *TodoControllerStruct) UpdateTodo(c *gin.Context) {
 		return
 	}
 
-	newTodo.OwnerId = c.GetString(config.TOKEN_CURRENT_USER_ID)
+	newTodo.OwnerId = c.GetString(controller.config.TokenCurrentUserId)
 
 	updatedTodo, err := controller.service.UpdateTodo(newTodo)
 
@@ -181,8 +198,8 @@ func (controller *TodoControllerStruct) GetTodoByID(c *gin.Context) {
 		return
 	}
 
-	owner := c.GetString(config.TOKEN_CURRENT_USER_ID)
-	currentUserRole := int(c.GetFloat64(config.TOKEN_CURRENT_USER_ROLE))
+	owner := c.GetString(controller.config.TokenCurrentUserId)
+	currentUserRole := int(c.GetFloat64(controller.config.TokenCurrentUserRole))
 
 	var todo dtos.TodoDTO
 	if currentUserRole == constants.RoleAdmin {
@@ -231,7 +248,7 @@ func (controller *TodoControllerStruct) DeleteTodo(c *gin.Context) {
 		return
 	}
 
-	owner := c.GetString(config.TOKEN_CURRENT_USER_ID)
+	owner := c.GetString(controller.config.TokenCurrentUserId)
 	err = controller.service.DeleteTodo(id, owner)
 
 	if err != nil {

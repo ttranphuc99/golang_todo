@@ -3,25 +3,25 @@ package repository
 import (
 	"database/sql"
 	"log"
+	"todoapi/config"
 	"todoapi/database"
 	"todoapi/models"
 )
 
 type UserAccountRepository interface {
-	Init() error
 	Login(user models.UserAccount) (models.UserAccountDTO, error)
 }
 
 type UserAccountRepositoryStruct struct {
 	dbHandler database.Database
+	config    config.Config
 }
 
-func (repo *UserAccountRepositoryStruct) Init() error {
-	tempDb := &database.DatabaseStruct{}
-	repo.dbHandler = tempDb
-	error := repo.dbHandler.Open()
-
-	return error
+func NewUserAccountRepository(dbHandler database.Database, config config.Config) (*UserAccountRepositoryStruct, error) {
+	repo := &UserAccountRepositoryStruct{}
+	repo.config = config
+	repo.dbHandler = dbHandler
+	return repo, dbHandler.Open()
 }
 
 func (repo *UserAccountRepositoryStruct) Login(user models.UserAccount) (models.UserAccountDTO, error) {

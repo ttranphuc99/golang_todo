@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"log"
+	"todoapi/config"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -14,12 +15,20 @@ type Database interface {
 }
 
 type DatabaseStruct struct {
-	db *sql.DB
+	db     *sql.DB
+	config config.Config
+}
+
+func NewDatabaseStruct(config config.Config) *DatabaseStruct {
+	database := &DatabaseStruct{}
+	database.config = config
+
+	return database
 }
 
 func (dbs *DatabaseStruct) Open() error {
 	log.Println("Open connection to DB")
-	tempDb, err := sql.Open("mysql", connectionStr)
+	tempDb, err := sql.Open("mysql", dbs.config.ConnectionStr)
 
 	if err != nil {
 		log.Println(err)

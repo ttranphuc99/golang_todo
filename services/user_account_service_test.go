@@ -22,8 +22,7 @@ func (m MockLoginSuccessRepository) Login(user models.UserAccount) (models.UserA
 
 func TestLoginSuccess(t *testing.T) {
 	repo := MockLoginSuccessRepository{}
-	service := services.UserAccountServiceStruct{}
-	service.InitWith(repo)
+	service := services.NewUserAccountService(repo, configMock)
 
 	userAccount := models.UserAccount{
 		LoginId: "admin",
@@ -48,8 +47,7 @@ func (m MockLoginFailRepository) Login(user models.UserAccount) (models.UserAcco
 
 func TestLoginFail(t *testing.T) {
 	repo := MockLoginFailRepository{}
-	service := services.UserAccountServiceStruct{}
-	service.InitWith(repo)
+	service := services.NewUserAccountService(repo, configMock)
 
 	_, error := service.Login(models.UserAccount{})
 

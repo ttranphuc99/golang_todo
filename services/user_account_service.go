@@ -13,22 +13,20 @@ import (
 )
 
 type UserAccountService interface {
-	Init() error
 	Login(user models.UserAccount) (dtos.LoginDTO, error)
 }
 
 type UserAccountServiceStruct struct {
 	repository repository.UserAccountRepository
+	config     config.Config
 }
 
-func (service *UserAccountServiceStruct) Init() error {
-	tempRepo := &repository.UserAccountRepositoryStruct{}
-	service.repository = tempRepo
-	return service.repository.Init()
-}
-
-func (service *UserAccountServiceStruct) InitWith(repository repository.UserAccountRepository) {
+func NewUserAccountService(repository repository.UserAccountRepository, config config.Config) *UserAccountServiceStruct {
+	service := &UserAccountServiceStruct{}
 	service.repository = repository
+	service.config = config
+
+	return service
 }
 
 func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.LoginDTO, error) {
@@ -39,7 +37,7 @@ func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.Lo
 		return dtos.LoginDTO{}, error
 	}
 
-	token, error := createToken(user.LoginId, userRes.Role)
+	token, error := createToken(user.LoginId, userRes.Role, service.config)
 
 	if error != nil {
 		log.Println(error)
@@ -49,16 +47,16 @@ func (service *UserAccountServiceStruct) Login(user models.UserAccount) (dtos.Lo
 	return dtos.LoginDTO{Token: token, User: userRes}, nil
 }
 
-func createToken(loginId string, role int) (string, error) {
+func createToken(loginId string, role int, config config.Config) (string, error) {
 	var err error
 
 	// create access token
-	os.Setenv("ACCESS_SECRET", config.SECRET_KEY_JWT)
+	os.Setenv("ACCESS_SECRET", config.SecretKeyJwt)
 
 	atClaims := jwt.MapClaims{}
-	atClaims[config.TOKEN_CURRENT_USER_ID] = loginId
-	atClaims[config.TOKEN_CURRENT_USER_ROLE] = role
-	atClaims[config.TOKEN_EXP] = time.Now().Add(time.Minute * 30).Unix()
+	atClaims[config.TokenCurrentUserId] = loginId
+	atClaims[config.TokenCurrentUserRole] = role
+	atClaims[config.TokenExp] = time.Now().Add(time.Minute * 30).Unix()
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 

@@ -2,8 +2,11 @@ package controllers
 
 import (
 	"log"
+	"todoapi/config"
+	"todoapi/database"
 	"todoapi/dtos"
 	"todoapi/models"
+	"todoapi/repository"
 	"todoapi/services"
 
 	"github.com/gin-gonic/gin"
@@ -15,12 +18,28 @@ type AccountController interface {
 
 type AccountControllerStruct struct {
 	service services.UserAccountService
+	config  config.Config
+}
+
+func NewAccountController(config config.Config) *AccountControllerStruct {
+	controller := &AccountControllerStruct{
+		config: config,
+	}
+	return controller
 }
 
 func (controller *AccountControllerStruct) init() error {
-	tempService := &services.UserAccountServiceStruct{}
-	controller.service = tempService
-	return controller.service.Init()
+	dbHandler := database.NewDatabaseStruct(controller.config)
+	repository, error := repository.NewUserAccountRepository(dbHandler, controller.config)
+
+	if error != nil {
+		log.Println("Error " + error.Error())
+		return error
+	}
+
+	controller.service = services.NewUserAccountService(repository, controller.config)
+
+	return nil
 }
 
 func (controller *AccountControllerStruct) Login(c *gin.Context) {

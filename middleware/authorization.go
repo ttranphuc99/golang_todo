@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CheckToken() gin.HandlerFunc {
+func CheckToken(config config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := c.Request.Header.Get("Authorization")
 
@@ -35,7 +35,7 @@ func CheckToken() gin.HandlerFunc {
 		}
 
 		token, err := jwt.Parse(reqToken, func(t *jwt.Token) (interface{}, error) {
-			return []byte(config.SECRET_KEY_JWT), nil
+			return []byte(config.SecretKeyJwt), nil
 		})
 
 		if err != nil {
@@ -48,8 +48,8 @@ func CheckToken() gin.HandlerFunc {
 		claims, isOk := token.Claims.(jwt.MapClaims)
 
 		if isOk {
-			c.Set(config.TOKEN_CURRENT_USER_ID, claims[config.TOKEN_CURRENT_USER_ID])
-			c.Set(config.TOKEN_CURRENT_USER_ROLE, claims[config.TOKEN_CURRENT_USER_ROLE])
+			c.Set(config.TokenCurrentUserId, claims[config.TokenCurrentUserId])
+			c.Set(config.TokenCurrentUserRole, claims[config.TokenCurrentUserRole])
 		} else {
 			log.Panicf("Cannot extract claims from token %s\n", reqToken)
 			handleUnauthorized(c, "Invalid Token")

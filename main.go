@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"todoapi/config"
 	"todoapi/controllers"
 	"todoapi/middleware"
 
@@ -8,18 +10,25 @@ import (
 )
 
 func main() {
+	// config
+	config, err := config.LoadConfig(".")
+
+	if err != nil {
+		log.Fatal("Error calling config ", err)
+	}
+
 	router := gin.Default()
 	router.Use(gin.CustomRecovery(middleware.Recover()))
-	todoController := controllers.TodoControllerStruct{}
-	accountController := controllers.AccountControllerStruct{}
+	todoController := controllers.NewTodoController(config)
+	accountController := controllers.NewAccountController(config)
 
 	todoRoutes := router.Group("/todo")
 	{
-		todoRoutes.GET("/", middleware.CheckToken(), todoController.GetAllTodo)
-		todoRoutes.POST("/", middleware.CheckToken(), todoController.InsertTodo)
-		todoRoutes.PUT("/", middleware.CheckToken(), todoController.UpdateTodo)
-		todoRoutes.GET("/:id", middleware.CheckToken(), todoController.GetTodoByID)
-		todoRoutes.DELETE("/:id", middleware.CheckToken(), todoController.DeleteTodo)
+		todoRoutes.GET("/", middleware.CheckToken(config), todoController.GetAllTodo)
+		todoRoutes.POST("/", middleware.CheckToken(config), todoController.InsertTodo)
+		todoRoutes.PUT("/", middleware.CheckToken(config), todoController.UpdateTodo)
+		todoRoutes.GET("/:id", middleware.CheckToken(config), todoController.GetTodoByID)
+		todoRoutes.DELETE("/:id", middleware.CheckToken(config), todoController.DeleteTodo)
 	}
 
 	router.POST("/login", accountController.Login)
