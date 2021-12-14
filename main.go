@@ -22,13 +22,13 @@ func main() {
 	todoController := controllers.NewTodoController(config)
 	accountController := controllers.NewAccountController(config)
 
-	todoRoutes := router.Group("/todo")
+	todoRoutes := router.Group("/todo").Use(middleware.CheckToken(config))
 	{
-		todoRoutes.GET("/", middleware.CheckToken(config), todoController.GetAllTodo)
-		todoRoutes.POST("/", middleware.CheckToken(config), todoController.InsertTodo)
-		todoRoutes.PUT("/", middleware.CheckToken(config), todoController.UpdateTodo)
-		todoRoutes.GET("/:id", middleware.CheckToken(config), todoController.GetTodoByID)
-		todoRoutes.DELETE("/:id", middleware.CheckToken(config), todoController.DeleteTodo)
+		todoRoutes.GET("/", todoController.GetAllTodo)
+		todoRoutes.POST("/", todoController.InsertTodo)
+		todoRoutes.PUT("/", todoController.UpdateTodo)
+		todoRoutes.GET("/:id", todoController.GetTodoByID)
+		todoRoutes.DELETE("/:id", todoController.DeleteTodo)
 	}
 
 	router.POST("/login", accountController.Login)
