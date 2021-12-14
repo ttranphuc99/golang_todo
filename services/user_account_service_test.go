@@ -24,14 +24,20 @@ func TestLoginSuccess(t *testing.T) {
 	repo := MockLoginSuccessRepository{}
 	service := services.NewUserAccountService(repo, configMock)
 
+	loginId := "admin"
+
 	userAccount := models.UserAccount{
-		LoginId: "admin",
+		LoginId: loginId,
 	}
 
-	_, error := service.Login(userAccount)
+	user, error := service.Login(userAccount)
 
 	if error != nil {
 		t.Error("Expect error nil but got: ", error)
+	} else if user.User.LoginId != loginId {
+		t.Errorf("Expect login id = %s but got %s", loginId, user.User.LoginId)
+	} else if user.Token == "" {
+		t.Error("Login success but get empty token")
 	}
 }
 
